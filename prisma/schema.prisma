@@ -1,0 +1,76 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output = "./ERD.svg"
+
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+model Team{
+  idTeam Int @id @default(autoincrement())
+  name String
+  players SoccerPlayer[]
+
+  timeColors ColorTime[]
+  visitorMatches Match[]  @relation("Visitor")
+  houseMatches Match[] @relation("House")
+}
+
+model SoccerPlayer{
+  cpf String @id
+  number Int
+  name String
+  team Team? @relation(fields: [teamId], references: [idTeam], onDelete: SetNull)
+  teamId Int?
+
+  matches SoccerMatch[]
+}
+
+model Color{
+  idColor Int @id @default(autoincrement())
+  color String @unique
+
+  teamColors ColorTime[]
+}
+
+model ColorTime{
+  colorId Int
+  color Color @relation(fields: [colorId], references: [idColor], onDelete: Cascade)
+  teamId Int
+  team Team @relation(fields: [teamId], references: [idTeam], onDelete: Cascade)
+  @@id([colorId,teamId])
+}
+
+model Match{
+  idMatch Int @id @default(autoincrement())
+  local String
+  data DateTime
+  scoreHouse Int @default(0)
+  scoreVisitor Int @default(0) 
+  visitorTeamId Int
+  visitorTeam Team @relation("Visitor", fields: [visitorTeamId], references: [idTeam], onDelete: Cascade)
+  houseTeamId Int
+  houseTeam Team @relation("House", fields: [houseTeamId], references: [idTeam], onDelete: Cascade)
+
+  players SoccerMatch[]
+}
+
+model SoccerMatch{
+  matchId Int
+  match Match @relation(fields: [matchId], references: [idMatch], onDelete: Cascade)
+  cpfPlayer String
+  player SoccerPlayer @relation(fields: [cpfPlayer], references: [cpf], onDelete: Cascade)
+  entry Int @default(0)
+  position String
+  @@id([matchId,cpfPlayer])
+
+}
